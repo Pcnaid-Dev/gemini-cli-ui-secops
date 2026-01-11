@@ -53,22 +53,27 @@ const generateRefreshToken = (user) => {
 
 ### Current Code (server/middleware/auth.js)
 ```javascript
-const JWT_SECRET = process.env.JWT_SECRET || 'claude-ui-dev-secret-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-value';
 ```
+
+**Issue:** Uses a publicly known default value as fallback.
 
 ### Recommended Fix
 ```javascript
 const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!JWT_SECRET || JWT_SECRET === 'claude-ui-dev-secret-change-in-production') {
-  console.error('❌ SECURITY ERROR: JWT_SECRET must be set in production');
+// List of known weak/default secrets to reject
+const WEAK_SECRETS = ['default-secret-value', 'dev-secret', 'change-me'];
+
+if (!JWT_SECRET || WEAK_SECRETS.includes(JWT_SECRET)) {
+  console.error('❌ SECURITY ERROR: JWT_SECRET must be set to a strong, random value');
   console.error('Generate a strong secret with: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
   
   if (process.env.NODE_ENV === 'production') {
     process.exit(1); // Exit in production
   }
   
-  console.warn('⚠️  WARNING: Using default JWT secret in development. DO NOT use in production!');
+  console.warn('⚠️  WARNING: Using weak or default JWT secret. DO NOT use in production!');
 }
 ```
 
